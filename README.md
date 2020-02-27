@@ -16,7 +16,12 @@ Defina a distância ou digite '0' para ler do csv
 Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arquivo:
 ```
 
-
+### Diretórios necessários
+- /csv/
+- /results/
+- /results/kml/
+- /results/geojson/
+- /data/
 
 ### Estrutura do CSV:
 
