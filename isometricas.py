@@ -23,12 +23,12 @@ def inputNumber(message):
        print("Não é um inteiro! Tente novamente")
        continue
     else:
-       return userInput  
+       return userInput 
 
 if __name__ == '__main__':
     #Get csv name and info
-    csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
-    #csv = 'ids_teste'
+    #csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
+    csv = 'ids_teste'
     if csv.find('.') == -1:
         csv = csv.replace(".csv","")
         openFile = 'csv/'+ csv + '.csv'
@@ -40,52 +40,44 @@ if __name__ == '__main__':
 
 #abertura de arquivos
 ids_merchant = pd.read_csv(openFile)
-area_ifood = gpd.read_file("data/areas_ifood.geojson")
+area = gpd.read_file("data/areas_ifood.geojson")
 
 #Para cada linha do CSV, repete a ação de criação de isométricas
-for index, row in ids_merchant.iterrows():
+for index, row in ids_merchant.iterrows():      
 
     #parametros de abertura de arquivo e definição de ranges
-    ranges = []
-    if size_isos == 0:
-        size_isos = row['distance']
-    minValue = 0
-    maxValue = int((size_isos/500)-1)
     frn_id = row['frn_id']
     latitude = row['origin_latitude']
     longitude = row['origin_longitude']
     region = row['logistic_region'].upper()
     status = row['processed']
-    if size_isos <= 1000:
-        ranges.append(list(range(500, 1500, 500)))
-    elif size_isos > 1000 and size_isos <= 5000:
-        ranges.append(list(range(500,size_isos+500,500)))
-    elif size_isos > 5000 and size_isos <= 10000:
-        ranges.append(list(range(500,5500,500)))
-        ranges.append(list(range(5500,size_isos+500,500)))
-    elif size_isos > 10000 and size_isos <= 15000:
-        ranges.append(list(range(500,5500,500)))
-        ranges.append(list(range(5500,10500,500)))
-        ranges.append(list(range(10500,size_isos+500,500)))
+    size_isos = row['distance']   
+    ranges = list(range(500, size_isos+500, 500))
+    ranges = [list(ranges[:10]),list(ranges[10:20]),list(ranges[20:30])]
+    minValue = 0
+    maxValue = int((size_isos/500)-1)
 
     if status == 'F':
         iso_array = []
         print (frn_id,latitude,longitude,region,size_isos)
+        if size_isos == 0:
+            size_isos: row['distance']
         for x in ranges:
-            body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
-            headers = {
-            'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
-            'Authorization': '5b3ce3597851110001cf62480bc2f932fdaf4f92a024171caeeb95c8',
-            'Content-Type': 'application/json; charset=utf-8'
-            }
-            try:
-                print('Gerando isométricas:' + str(x))
-                call = requests.post('https://api.openrouteservice.org/v2/isochrones/driving-car', json=body, headers=headers)
-            except:
-                print('Erro na chamada do serviço')
-                print(call.status_code, call.reason)
-            
-            iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
+            if x!=[]:
+                body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
+                headers = {
+                'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+                'Authorization': '5b3ce3597851110001cf62480bc2f932fdaf4f92a024171caeeb95c8',
+                'Content-Type': 'application/json; charset=utf-8'
+                }
+                try:
+                    print('Gerando isométricas:' + str(x))
+                    call = requests.post('https://api.openrouteservice.org/v2/isochrones/driving-car', json=body, headers=headers)
+                except:
+                    print('Erro na chamada do serviço')
+                    print(call.status_code, call.reason)
+                
+                iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
         concat_area = pd.concat(iso_array, ignore_index=True)   
         concat_area.insert(0, "frn_id", frn_id)
         concat_area.insert(0,"name",concat_area['value'])   
@@ -93,7 +85,8 @@ for index, row in ids_merchant.iterrows():
 
         #corta a isométrica combinada com o limite do praça
         print('Recortando as isométricas com a praça')
-        concat_area = cl.clip_shp(concat_area,area_ifood[area_ifood['area_name']==region])
+        concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
+        print(concat_area)
         
         # Recorta as áreas maiores com as áreas menores
         print('Recortando das isométricas')    
