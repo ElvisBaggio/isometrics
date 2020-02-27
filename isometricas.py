@@ -52,8 +52,8 @@ for index, row in ids_merchant.iterrows():
     latitude = row['origin_latitude']
     longitude = row['origin_longitude']
     region = row['logistic_region'].upper()
-    status = row['status']
-    if status == '':
+    status = row['processado']
+    if status == 'F':
         iso_array = []
         print (frn_id,latitude,longitude,region)
         for x in ranges:
@@ -87,6 +87,7 @@ for index, row in ids_merchant.iterrows():
         print(concat_area)
         concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
         concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
-        ids_merchant.to_csv(openFile, mode='a', header=False)
+        ids_merchant.at[index,'processado']= 'T'
+        ids_merchant.to_csv(openFile, mode='w', index=False)
     else:
-        print(frn_id+' já processado')
+        print(str(frn_id) +' já processado')
