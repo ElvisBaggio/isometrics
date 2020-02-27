@@ -49,4 +49,4 @@ start = 500
 stop = 5000
 step = 500
 
-print(list(range(start, stop, step)))
+print(list(range(500, 5000, 500)))

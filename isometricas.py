@@ -4,25 +4,27 @@ import geopandas as gpd
 import requests
 import json
 import fiona
+import earthpy as et
+import warnings; warnings.filterwarnings('ignore', 'GeoSeries.notna', UserWarning)
 
 from shapely.geometry import Point, Polygon
 from geopandas import GeoSeries, GeoDataFrame
-import earthpy as et
 from earthpy import clip as cl
 
-import warnings; warnings.filterwarnings('ignore', 'GeoSeries.notna', UserWarning)
-  
 fiona.supported_drivers
 fiona.drvsupport.supported_drivers['kml'] = 'rw' # enable KML support which is disabled by default
 fiona.drvsupport.supported_drivers['KML'] = 'rw' # enable KML support which is disabled by default
 
-# Print area file
-def printArea(df,filename):
+def inputNumber(message):
+  while True:
     try:
-        os.remove(filename)
-    except OSError:
-        pass
-    df.to_file(driver="GeoJSON",filename=filename)
+       userInput = int(input(message))       
+    except ValueError:
+       print("Não é um inteiro! Tente novamente")
+       continue
+    else:
+       return userInput 
+       break 
 
 if __name__ == '__main__':
     #Get csv name and info
@@ -36,17 +38,31 @@ if __name__ == '__main__':
         csv = csv.split('.')[0]    
 
     brasil_iFood = input("Incluir camada complementar da área da praça para recortar (s para 'sim', qualquer tecla para continuar):" )
-    brasil_iFood = True if brasil_iFood.lower()=='s' else False    
+    brasil_iFood = True if brasil_iFood.lower()=='s' else False
+
+    size_isos = inputNumber("Digite a distância em metros (de 1000 a 15000, padrão 10000):")
+
 
 #parametros de abertura de arquivo e definição de ranges
 ids_merchant = pd.read_csv(openFile)
 area_ifood = gpd.read_file("data/areas_ifood.geojson")
-ranges = [[500,1000,1500,2000,2500,3000,3500,4000,4500,5000],[5500,6000,6500,7000,7500,8000,8500,9000,9500,10000]]#,[10500,11000]]
+ranges = []
 minValue = 0
-maxValue = 19
+maxValue = int((size_isos/500)-1)
+if size_isos <= 1000:
+    ranges.append(list(range(500, 1500, 500)))
+elif size_isos > 1000 and size_isos <= 5000:
+    ranges.append(list(range(500,size_isos+500,500)))
+elif size_isos > 5000 and size_isos <= 10000:
+    ranges.append(list(range(500,5500,500)))
+    ranges.append(list(range(5500,size_isos+500,500)))
+elif size_isos > 10000 and size_isos <= 15000:
+    ranges.append(list(range(500,5500,500)))
+    ranges.append(list(range(5500,10500,500)))
+    ranges.append(list(range(10500,size_isos+500,500)))
+
 
 #Para cada linha do CSV, repete a ação de criação de isométricas
-
 for index, row in ids_merchant.iterrows():
     frn_id = row['frn_id']
     latitude = row['origin_latitude']

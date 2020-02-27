@@ -45,42 +45,49 @@ ranges = [[500,1000,1500,2000,2500,3000,3500,4000,4500,5000],[5500,6000,6500,700
 minValue = 0
 maxValue = 19
 
-#Para cada linha do CSV, repete a ação de criação de isométricas
-for index, row in ids_merchant.iterrows():
-    iso_array = []
-    frn_id = row['frn_id']
-    latitude = row['origin_latitude']
-    longitude = row['origin_longitude']
-    region = row['logistic_region'].upper()
-    print (frn_id,latitude,longitude,region)
-    for x in ranges:
-        body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
-        headers = {
-        'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
-        'Authorization': '5b3ce3597851110001cf62480bc2f932fdaf4f92a024171caeeb95c8',
-        'Content-Type': 'application/json; charset=utf-8'
-        }
-        try:
-            print('Gerando isométricas:' + str(x))
-            call = requests.post('https://api.openrouteservice.org/v2/isochrones/driving-car', json=body, headers=headers)
-        except:
-            print('Erro na chamada do serviço')
-            print(call.status_code, call.reason)
-        
-        iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
-    concat_area = pd.concat(iso_array, ignore_index=True)   
-    concat_area.insert(0, "frn_id", frn_id)
-    concat_area.insert(0,"name",concat_area['value'])   
-    concat_area = concat_area.drop(['center'],axis=1)
+# #Para cada linha do CSV, repete a ação de criação de isométricas
 
-    #corta a isométrica combinada com o limite do praça
-    print('Recortando as isométricas com a praça')
-    concat_area = cl.clip_shp(concat_area,area_ifood[area_ifood['area_name']==region])
-     
-    # Recorta as áreas maiores com as áreas menores    
-    for i in reversed(range(minValue+1,maxValue+1)):
-        concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
+# for index, row in ids_merchant.iterrows():
+#     frn_id = row['frn_id']
+#     latitude = row['origin_latitude']
+#     longitude = row['origin_longitude']
+#     region = row['logistic_region'].upper()
+#     status = row['processado']
+#     if status == 'F':
+#         iso_array = []
+#         print (frn_id,latitude,longitude,region)
+#         for x in ranges:
+#             body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
+#             headers = {
+#             'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+#             'Authorization': '5b3ce3597851110001cf62480bc2f932fdaf4f92a024171caeeb95c8',
+#             'Content-Type': 'application/json; charset=utf-8'
+#             }
+#             try:
+#                 print('Gerando isométricas:' + str(x))
+#                 call = requests.post('https://api.openrouteservice.org/v2/isochrones/driving-car', json=body, headers=headers)
+#             except:
+#                 print('Erro na chamada do serviço')
+#                 print(call.status_code, call.reason)
+            
+#             iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
+#         concat_area = pd.concat(iso_array, ignore_index=True)   
+#         concat_area.insert(0, "frn_id", frn_id)
+#         concat_area.insert(0,"name",concat_area['value'])   
+#         concat_area = concat_area.drop(['center'],axis=1)
+
+#         #corta a isométrica combinada com o limite do praça
+#         print('Recortando as isométricas com a praça')
+#         concat_area = cl.clip_shp(concat_area,area_ifood[area_ifood['area_name']==region])
         
-    print(concat_area)
-    concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
-    concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
+#         # Recorta as áreas maiores com as áreas menores    
+#         for i in reversed(range(minValue+1,maxValue+1)):
+#             concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
+            
+#         print(concat_area)
+#         concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
+#         concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
+#         ids_merchant.at[index,'processado']= 'T'
+#         ids_merchant.to_csv(openFile, mode='w', index=False)
+#     else:
+#         print(str(frn_id) +' já processado')
