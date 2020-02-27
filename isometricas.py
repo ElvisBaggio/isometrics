@@ -23,13 +23,12 @@ def inputNumber(message):
        print("Não é um inteiro! Tente novamente")
        continue
     else:
-       return userInput 
-       break 
+       return userInput  
 
 if __name__ == '__main__':
     #Get csv name and info
     csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
-    #csv = 'teste1'
+    #csv = 'ids_teste'
     if csv.find('.') == -1:
         csv = csv.replace(".csv","")
         openFile = 'csv/'+ csv + '.csv'
@@ -37,41 +36,41 @@ if __name__ == '__main__':
         openFile = 'csv/'+ csv
         csv = csv.split('.')[0]    
 
-    brasil_iFood = input("Incluir camada complementar da área da praça para recortar (s para 'sim', qualquer tecla para continuar):" )
-    brasil_iFood = True if brasil_iFood.lower()=='s' else False
+    size_isos = inputNumber("Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arquivo:")
 
-    size_isos = inputNumber("Digite a distância em metros (de 1000 a 15000, padrão 10000):")
-
-
-#parametros de abertura de arquivo e definição de ranges
+#abertura de arquivos
 ids_merchant = pd.read_csv(openFile)
 area_ifood = gpd.read_file("data/areas_ifood.geojson")
-ranges = []
-minValue = 0
-maxValue = int((size_isos/500)-1)
-if size_isos <= 1000:
-    ranges.append(list(range(500, 1500, 500)))
-elif size_isos > 1000 and size_isos <= 5000:
-    ranges.append(list(range(500,size_isos+500,500)))
-elif size_isos > 5000 and size_isos <= 10000:
-    ranges.append(list(range(500,5500,500)))
-    ranges.append(list(range(5500,size_isos+500,500)))
-elif size_isos > 10000 and size_isos <= 15000:
-    ranges.append(list(range(500,5500,500)))
-    ranges.append(list(range(5500,10500,500)))
-    ranges.append(list(range(10500,size_isos+500,500)))
-
 
 #Para cada linha do CSV, repete a ação de criação de isométricas
 for index, row in ids_merchant.iterrows():
+
+    #parametros de abertura de arquivo e definição de ranges
+    ranges = []
+    if size_isos == 0:
+        size_isos = row['distance']
+    minValue = 0
+    maxValue = int((size_isos/500)-1)
     frn_id = row['frn_id']
     latitude = row['origin_latitude']
     longitude = row['origin_longitude']
     region = row['logistic_region'].upper()
-    status = row['processado']
+    status = row['processed']
+    if size_isos <= 1000:
+        ranges.append(list(range(500, 1500, 500)))
+    elif size_isos > 1000 and size_isos <= 5000:
+        ranges.append(list(range(500,size_isos+500,500)))
+    elif size_isos > 5000 and size_isos <= 10000:
+        ranges.append(list(range(500,5500,500)))
+        ranges.append(list(range(5500,size_isos+500,500)))
+    elif size_isos > 10000 and size_isos <= 15000:
+        ranges.append(list(range(500,5500,500)))
+        ranges.append(list(range(5500,10500,500)))
+        ranges.append(list(range(10500,size_isos+500,500)))
+
     if status == 'F':
         iso_array = []
-        print (frn_id,latitude,longitude,region)
+        print (frn_id,latitude,longitude,region,size_isos)
         for x in ranges:
             body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
             headers = {
@@ -96,14 +95,15 @@ for index, row in ids_merchant.iterrows():
         print('Recortando as isométricas com a praça')
         concat_area = cl.clip_shp(concat_area,area_ifood[area_ifood['area_name']==region])
         
-        # Recorta as áreas maiores com as áreas menores    
+        # Recorta as áreas maiores com as áreas menores
+        print('Recortando das isométricas')    
         for i in reversed(range(minValue+1,maxValue+1)):
             concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
             
         print(concat_area)
         concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
         concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
-        ids_merchant.at[index,'processado']= 'T'
+        ids_merchant.at[index,'processed']= 'T'
         ids_merchant.to_csv(openFile, mode='w', index=False)
     else:
         print(str(frn_id) +' já processado')
