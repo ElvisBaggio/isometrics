@@ -40,7 +40,9 @@ Grava o status do processamento no csv
 
 ### exemplo csv
 
-frn_id,origin_latitude,origin_longitude,logistic_region,distance,processed
-12345,-23.597875,-46.667232,SAO PAULO,7000,F
-34567,-23.621545,-46.699664,SAO PAULO,10000,F
-891011,-23.621656,-46.699464,Sao Paulo,10000,F
+| frn_id,origin_latitude,origin_longitude,logistic_region,distance,processed|
+| ------ |
+| 12345,-23.597875,-46.667232,SAO PAULO,7000,F |
+| 34567,-23.621545,-46.699664,SAO PAULO,10000,F |
+| 891011,-23.621656,-46.699464,Sao Paulo,10000,F |
+
