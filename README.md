@@ -25,22 +25,22 @@ Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arqu
 
 ### Estrutura do CSV:
 
-- frn_id
+- frn_id: 
 Identificador único para geração das isométricas
 
-- origin_latitude
+- origin_latitude: 
 Latitude da origem
 
-- origin_longitude
+- origin_longitude: 
 Latitude da origem
 
-- logistic_region
+- logistic_region: 
 Nome da área
 
-- distance
+- distance: 
 Distância para criação das isométricas. Caso digite '0' no terminal, o valor será lido do csv.
 
-- processed
+- processed: 
 Grava o status do processamento no csv
 
 ### exemplo csv
