@@ -27,8 +27,8 @@ def inputNumber(message):
 
 if __name__ == '__main__':
     #Get csv name and info
-    #csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
-    csv = 'ids_teste'
+    csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
+    #csv = 'ids_teste'
     if csv.find('.') == -1:
         csv = csv.replace(".csv","")
         openFile = 'csv/'+ csv + '.csv'
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
 #abertura de arquivos
 ids_merchant = pd.read_csv(openFile)
-area = gpd.read_file("data/areas_ifood.geojson")
+area = gpd.read_file("data/areas.geojson")
 
 #Para cada linha do CSV, repete a ação de criação de isométricas
 for index, row in ids_merchant.iterrows():      
@@ -71,11 +71,12 @@ for index, row in ids_merchant.iterrows():
                 'Content-Type': 'application/json; charset=utf-8'
                 }
                 try:
-                    print('Gerando isométricas:' + str(x))
+                    print(str(frn_id) +': Gerando isométricas:' + str(x))
                     call = requests.post('https://api.openrouteservice.org/v2/isochrones/driving-car', json=body, headers=headers)
                 except:
-                    print('Erro na chamada do serviço')
+                    print('ERRO: Erro na chamada do serviço.\n')
                     print(call.status_code, call.reason)
+                    continue
                 
                 iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
         concat_area = pd.concat(iso_array, ignore_index=True)   
@@ -84,16 +85,23 @@ for index, row in ids_merchant.iterrows():
         concat_area = concat_area.drop(['center'],axis=1)
 
         #corta a isométrica combinada com o limite do praça
-        print('Recortando as isométricas com a praça')
-        concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
-        print(concat_area)
-        
+        try:
+            print(str(frn_id) +': Recortando as isométricas com a praça')
+            concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
+        except ValueError:
+            print(str(frn_id) +': ERRO: Não foi possivel recortar com a praça. Verifique o nome da área.\n')
+            continue
+
         # Recorta as áreas maiores com as áreas menores
-        print('Recortando das isométricas')    
-        for i in reversed(range(minValue+1,maxValue+1)):
-            concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
-            
-        print(concat_area)
+        try:
+            print(str(frn_id) +': Recortando das isométricas.\n')    
+            for i in reversed(range(minValue+1,maxValue+1)):
+                concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
+        except ValueError:
+            print(str(frn_id) +': ERRO: Falha no recorte das isométricas.\n')
+            print('')
+            continue
+
         concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
         concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
         ids_merchant.at[index,'processed']= 'T'
