@@ -23,6 +23,8 @@ Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arqu
 - /results/geojson/
 - /data/
 
+Na pasta data o arquivo areas.json é obrigatório.
+
 ### Estrutura do CSV:
 
 Todos os campos são obrigatórios.
