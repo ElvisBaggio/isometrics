@@ -47,6 +47,7 @@ for index, row in ids_merchant.iterrows():
 
     #parametros de abertura de arquivo e definição de ranges
     frn_id = row['frn_id']
+    trading_name = row['trading_name']
     latitude = row['origin_latitude']
     longitude = row['origin_longitude']
     region = row['logistic_region'].upper()
@@ -81,6 +82,7 @@ for index, row in ids_merchant.iterrows():
                 iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
         concat_area = pd.concat(iso_array, ignore_index=True)   
         concat_area.insert(0, "frn_id", frn_id)
+        concat_area.insert(0, "trading_name", trading_name)
         concat_area.insert(0,"name",concat_area['value'])   
         concat_area = concat_area.drop(['center'],axis=1)
 
