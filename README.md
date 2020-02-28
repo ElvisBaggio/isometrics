@@ -29,19 +29,19 @@ Na pasta data o arquivo areas.geojson é obrigatório.
 
 Todos os campos são obrigatórios.
 
-- *frn_id:* Identificador único para geração das isométricas
+- **frn_id:** Identificador único para geração das isométricas
 
-- *trading_name:* Nome do Local
+- **trading_name:** Nome do Local
 
-- *origin_latitude:* Latitude da origem
+- **origin_latitude:** Latitude da origem
 
-- *origin_longitude:* Latitude da origem
+- **origin_longitude:** Latitude da origem
 
-- *logistic_region:* Nome da área
+- **logistic_region:** Nome da área
 
-- *distance:* Distância para criação das isométricas.
+- **distance:** Distância para criação das isométricas.
 
-- *processed:* Grava o status do processamento no csv
+- **processed:** Grava o status do processamento no csv
 
 ### exemplo csv
 
