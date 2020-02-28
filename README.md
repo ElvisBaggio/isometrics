@@ -3,7 +3,7 @@
 Cria isométricas a partir de um csv utilizando o serviço ORS.
 
 ```
-$ phyton3 isometricas.py
+$ python3 isometricas.py
 ```
 
 Insira o nome do arquivo presente na pasta csv
@@ -23,32 +23,25 @@ Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arqu
 - /results/geojson/
 - /data/
 
-Na pasta data o arquivo areas.json é obrigatório.
+Na pasta data o arquivo areas.geojson é obrigatório.
 
 ### Estrutura do CSV:
 
 Todos os campos são obrigatórios.
 
-- frn_id:  
-Identificador único para geração das isométricas
+- frn_id: Identificador único para geração das isométricas
 
-- trading_name:  
-Nome do Local
+- trading_name: Nome do Local
 
-- origin_latitude:  
-Latitude da origem
+- origin_latitude: Latitude da origem
 
-- origin_longitude:  
-Latitude da origem
+- origin_longitude: Latitude da origem
 
-- logistic_region:   
-Nome da área
+- logistic_region: Nome da área
 
-- distance:   
-Distância para criação das isométricas.
+- distance: Distância para criação das isométricas.
 
-- processed:   
-Grava o status do processamento no csv
+- processed: Grava o status do processamento no csv
 
 ### exemplo csv
 
