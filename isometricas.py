@@ -15,19 +15,33 @@ fiona.supported_drivers
 fiona.drvsupport.supported_drivers['kml'] = 'rw' # enable KML support which is disabled by default
 fiona.drvsupport.supported_drivers['KML'] = 'rw' # enable KML support which is disabled by default
 
+
 def inputNumber(message):
   while True:
     try:
-       userInput = int(input(message))       
+       userInput = int(input(message))
     except ValueError:
        print("Não é um inteiro! Tente novamente")
        continue
     else:
-       return userInput 
+       return userInput
+
+def inputText(message):
+    while True:
+        try:
+            userInput = input(message)
+            if not userInput:
+                raise ValueError('Digite um nome válido')
+        except ValueError as e:
+            print(e)
+            continue
+        else:
+            return userInput
+
 
 if __name__ == '__main__':
     #Get csv name and info
-    csv = input("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
+    csv = inputText("Nome do arquivo (se estiver sem extensão, vai considerar .csv): ")
     #csv = 'ids_teste'
     if csv.find('.') == -1:
         csv = csv.replace(".csv","")
@@ -63,6 +77,8 @@ for index, row in ids_merchant.iterrows():
         print (frn_id,latitude,longitude,region,size_isos)
         if size_isos == 0:
             size_isos: row['distance']
+        else:
+            pass
         for x in ranges:
             if x!=[]:
                 body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
