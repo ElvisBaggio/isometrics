@@ -79,7 +79,10 @@ for index, row in ids_merchant.iterrows():
                     print(call.status_code, call.reason)
                     continue
                 
-                iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
+                try:
+                    iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
+                except ValueError:
+                    print('Erro ao combinar isométricas. Verifique os dados')
         concat_area = pd.concat(iso_array, ignore_index=True)   
         concat_area.insert(0, "frn_id", frn_id)
         concat_area.insert(0, "trading_name", trading_name)
@@ -91,7 +94,7 @@ for index, row in ids_merchant.iterrows():
             print(str(frn_id) +': Recortando as isométricas com a praça')
             concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
         except ValueError:
-            print(str(frn_id) +': ERRO: Não foi possivel recortar com a praça. Verifique o nome da área.\n')
+            print(str(frn_id) +': ERRO: Não foi possivel recortar com a praça. Verifique o nome da área ou se a coordenada está dentro do hub logístico.\n')
             continue
 
         # Recorta as áreas maiores com as áreas menores
