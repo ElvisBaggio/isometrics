@@ -48,16 +48,25 @@ if __name__ == '__main__':
         openFile = 'csv/'+ csv + '.csv'
     else:
         openFile = 'csv/'+ csv
-        csv = csv.split('.')[0]    
+        csv = csv.split('.')[0]
+
+    #abertura de arquivos
+    try:
+        ids_merchant = pd.read_csv(openFile)
+    except:
+        print('Erro ao abrir o arquivo')
+        exit()
 
     size_isos = inputNumber("Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arquivo:")
-
-#abertura de arquivos
-ids_merchant = pd.read_csv(openFile)
-area = gpd.read_file("data/areas.geojson")
+    try:
+        area = gpd.read_file("data/areas.geojson")
+    except:
+        print('Erro ao abrir o arquivo de área')
+        exit()
+    
 
 #Para cada linha do CSV, repete a ação de criação de isométricas
-for index, row in ids_merchant.iterrows():      
+for index, row in ids_merchant.iterrows():
 
     #parametros de abertura de arquivo e definição de ranges
     frn_id = row['frn_id']
@@ -66,7 +75,7 @@ for index, row in ids_merchant.iterrows():
     longitude = row['origin_longitude']
     region = row['logistic_region'].upper()
     status = row['processed']
-    size_isos = row['distance']   
+    size_isos = row['distance']
     ranges = list(range(500, size_isos+500, 500))
     ranges = [list(ranges[:10]),list(ranges[10:20]),list(ranges[20:30])]
     minValue = 0
@@ -94,15 +103,15 @@ for index, row in ids_merchant.iterrows():
                     print('ERRO: Erro na chamada do serviço.\n')
                     print(call.status_code, call.reason)
                     continue
-                
+
                 try:
                     iso_array.append(gpd.GeoDataFrame.from_features(call.json()))
                 except ValueError:
                     print('Erro ao combinar isométricas. Verifique os dados')
-        concat_area = pd.concat(iso_array, ignore_index=True)   
+        concat_area = pd.concat(iso_array, ignore_index=True)
         concat_area.insert(0, "frn_id", frn_id)
         concat_area.insert(0, "trading_name", trading_name)
-        concat_area.insert(0,"name",concat_area['value'])   
+        concat_area.insert(0,"name",concat_area['value'])
         concat_area = concat_area.drop(['center'],axis=1)
 
         #corta a isométrica combinada com o limite do praça
@@ -115,7 +124,7 @@ for index, row in ids_merchant.iterrows():
 
         # Recorta as áreas maiores com as áreas menores
         try:
-            print(str(frn_id) +': Recortando das isométricas.\n')    
+            print(str(frn_id) +': Recortando das isométricas.\n')
             for i in reversed(range(minValue+1,maxValue+1)):
                 concat_area[concat_area['value']==(i+1)*500.] = gpd.overlay(concat_area[concat_area['value']==(i+1)*500.],concat_area[concat_area['value']==(i)*500.], how='difference')
         except ValueError:
