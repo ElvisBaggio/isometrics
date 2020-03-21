@@ -64,7 +64,6 @@ if __name__ == '__main__':
         print('Erro ao abrir o arquivo de área')
         exit()
     
-
 #Para cada linha do CSV, repete a ação de criação de isométricas
 for index, row in ids_merchant.iterrows():
 
