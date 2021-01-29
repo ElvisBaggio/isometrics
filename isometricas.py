@@ -45,25 +45,40 @@ if __name__ == '__main__':
     #csv = 'ids_teste'
     if csv.find('.') == -1:
         csv = csv.replace(".csv","")
-        openFile = 'csv/'+ csv + '.csv'
+        openCSV = 'csv/'+ csv + '.csv'
     else:
-        openFile = 'csv/'+ csv
+        openCSV = 'csv/'+ csv
         csv = csv.split('.')[0]
 
-    #abertura de arquivos
+    #abertura do csv
     try:
-        ids_merchant = pd.read_csv(openFile)
+        ids_merchant = pd.read_csv(openCSV)
     except:
         print('Erro ao abrir o arquivo')
-        exit()
+        exit()         
 
-    size_isos = inputNumber("Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arquivo:")
-    try:
-        area = gpd.read_file("data/areas.geojson")
-    except:
-        print('Erro ao abrir o arquivo de área')
-        exit()
+    #Get area name and info
+    areafile = inputText("Nome do arquivo de limites ou recorte (Digite 'N' para não utilizar): ")    
+    if areafile != 'N':
+        if areafile.find('.') == -1:
+            areafile = areafile.replace(".geojson","")
+            openArea = 'data/'+ areafile + '.geojson'
+        else:
+            openArea = 'data/'+ areafile
+            areafile = areafile.split('.')[0]
+
+        try:
+            area = gpd.read_file(openArea)
+        except:
+            print('Erro ao abrir o arquivo de área')
+            exit()           
+    else:
+        areafile = 'F'
+
+    size_input = inputNumber("Digite a distância em metros (de '1000' a '15000'). Digite '0' para ler do arquivo:")
     
+    
+
 #Para cada linha do CSV, repete a ação de criação de isométricas
 for index, row in ids_merchant.iterrows():
 
@@ -75,24 +90,29 @@ for index, row in ids_merchant.iterrows():
     region = row['logistic_region'].upper()
     status = row['processed']
     size_isos = row['distance']
-    ranges = list(range(500, size_isos+500, 500))
-    ranges = [list(ranges[:10]),list(ranges[10:20]),list(ranges[20:30])]
-    minValue = 0
-    maxValue = int((size_isos/500)-1)
+
+    #define ranges
+
+    if size_input == 0:
+        ranges = list(range(500, size_isos+500, 500))
+        ranges = [list(ranges[:10]),list(ranges[10:20]),list(ranges[20:30])]
+        minValue = 0
+        maxValue = int((size_isos/500)-1)
+    else:
+        ranges = list(range(500, size_input+500, 500))
+        ranges = [list(ranges[:10]),list(ranges[10:20]),list(ranges[20:30])]
+        minValue = 0
+        maxValue = int((size_input/500)-1)
 
     if status == 'F':
         iso_array = []
         print (frn_id,latitude,longitude,region,size_isos)
-        if size_isos == 0:
-            size_isos: row['distance']
-        else:
-            pass
         for x in ranges:
             if x!=[]:
                 body = {"locations":[[longitude,latitude]],"range":x,"id":frn_id,"location_type":"start","range_type":"distance"}
                 headers = {
                 'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
-                'Authorization': '5b3ce3597851110001cf62480bc2f932fdaf4f92a024171caeeb95c8',
+                'Authorization': '5b3ce3597851110001cf6248f9413c6dbd1b4184aca6b57c3ad8bc72',
                 'Content-Type': 'application/json; charset=utf-8'
                 }
                 try:
@@ -114,14 +134,17 @@ for index, row in ids_merchant.iterrows():
         concat_area = concat_area.drop(['center'],axis=1)
 
         #corta a isométrica combinada com o limite do praça
-        try:
-            print(str(frn_id) +': Recortando as isométricas com a praça')
-            concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
-        except ValueError:
-            print(str(frn_id) +': ERRO: Não foi possivel recortar com a praça. Verifique o nome da área ou se a coordenada está dentro do hub logístico.\n')
+        if areafile != 'F':
+            try:
+                print(str(frn_id) +': Recortando as isométricas com a area')
+                concat_area = cl.clip_shp(concat_area,area[area['area_name']==region])
+            except ValueError:
+                print(str(frn_id) +': ERRO: Não foi possivel recortar com a area. Verifique o nome da área ou se a coordenada está dentro do hub logístico.\n')
+                continue
+        else:
             continue
 
-        # Recorta as áreas maiores com as áreas menores
+        #Recorta as áreas maiores com as áreas menores
         try:
             print(str(frn_id) +': Recortando das isométricas.\n')
             for i in reversed(range(minValue+1,maxValue+1)):
@@ -134,6 +157,6 @@ for index, row in ids_merchant.iterrows():
         concat_area.to_file('results/geojson/'+str(frn_id)+'.geojson',driver='GeoJSON')
         concat_area.to_file('results/kml/'+str(frn_id)+'.kml',driver='kml')
         ids_merchant.at[index,'processed']= 'T'
-        ids_merchant.to_csv(openFile, mode='w', index=False)
+        ids_merchant.to_csv(openCSV, mode='w', index=False)
     else:
         print(str(frn_id) +' já processado')
